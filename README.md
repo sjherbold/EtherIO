@@ -4,12 +4,19 @@ Python driver for Elexol EtherIO devices
 
 ## Description
 
-This driver provides a higher level abstraction of the Elexol IO device access through use of dot notation.
+This driver provides a higher level abstraction of the Elexol IO device access through use of object dot notation.
 
 The Elexol EtherIO devices provide access to digital IOs through a network ethernet interface. Each device is divided into a set of 8-bit ports that can be defined as input or output on a bit by bit basis.
 
 After creating a device object, device and port attributes can be accessed through simple dot notation both for reading and assignment.
 
+A device object is composed of:
+
+* dev  
+  * .io[n]   
+  * .porta (portb, portc, ...)  
+    * .val  
+    * .dir
 
 ### Code Use
 
@@ -58,7 +65,9 @@ help(dev)     #once the device has been defined this should provide the device s
 - [LED Module](https://temperosystems.com.au/products/connector-led-board/)
 - [Switch/Pushbutton Board](https://temperosystems.com.au/products/switch-push-button-board/)
 
-Also, the reseller:
+Elexol provides tools to manage device setup and setting of boot features. See their respective device resource pages.   
+
+Also, a reseller:
 [Salig](https://www.saelig.com/category/IO.htm)
 
 ## Author
@@ -86,4 +95,18 @@ Retry count, inter-retry delay, timeout can be adjusted in the eioudp class. Cur
 
 ### Module Command Differences
 
-This driver trys to make use of the support of legacy commands for the IO24/IO72 TCP modules to create a common base for all the modules. There is a connection oriented (TCP) protocol for the newer modules that is probably more reliable, but not supported on the older IO24R module. I have included an eiotcp class driver, but this is not tested or used.
+This driver makes use of of legacy supported commands for the IO24/IO72 TCP modules to create a common base for all the modules. There is a connection oriented (TCP) protocol for the newer modules that is probably more reliable, but not supported on the older IO24R module. I have included an eiotcp class driver, but this is not tested or used.
+
+### Aditional Device Object Attributes
+
+* .eeprom_ipaddr    get or set the device ip address
+* .eeprom_ipmask    get or set the device ip mask
+* .eeprom_ipgway    get or set the device ip gateway
+
+These attibutes are provided as an example of setting the eeprom boot values. They are typically set using the manufacturer tools.
+The device can be set to a fixed ip address using the jumpers, and from there configured to boot to the desired address.
+
+## Conclusion
+
+Let me know if this has been useful or helpful in your development. 
+Also looking for suggestions and recommendations to make this more Pythonic in style.
