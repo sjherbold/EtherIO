@@ -4,7 +4,7 @@ Python driver for Elexol EtherIO devices
 
 ## Description
 
-This driver provides a higher level abstraction of the Elexol IO device access through use of object dot notation.
+This driver provides a high level abstraction of the Elexol IO device access through use of object dot notation.
 
 The Elexol EtherIO devices provide access to digital IOs through a network ethernet interface. Each device is divided into a set of 8-bit ports that can be defined as input or output on a bit by bit basis.
 
@@ -110,3 +110,9 @@ The device can be set to a fixed ip address using the jumpers, and from there co
 
 Let me know if this has been useful or helpful in your development. 
 Also looking for suggestions and recommendations to make this more Pythonic in style.
+
+## Todo
+
+* Need more Pythonic method to only have the 'sch' & 'thr' port attributes on eio24r type objects.
+* Need to implement more eeprom setting helpers.
+* Need a fake eio software object to test in the absence of having physical hardware. 
