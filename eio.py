@@ -137,7 +137,6 @@ class eiobase:
         def __delitem__(self, io):
             pass
     
-    
     def _get_ee_ip(self, reg):
         w1 = eeprom_readword(self.ipaddr, reg+0)
         w2 = eeprom_readword(self.ipaddr, reg+1)
@@ -155,6 +154,12 @@ class eiobase:
     eeprom_ipaddr = property(lambda self: self._get_ee_ip(6),  lambda self,v: self._set_ee_ip(6,v),  doc=_doc_ee_ip + ", i.e. '192.168.1.10'")
     eeprom_ipmask = property(lambda self: self._get_ee_ip(25), lambda self,v: self._set_ee_ip(25,v), doc=_doc_ee_ip + ", i.e. '255.255.255.0'")
     eeprom_ipgway = property(lambda self: self._get_ee_ip(27), lambda self,v: self._set_ee_ip(27,v), doc=_doc_ee_ip + ", i.e. '192.168.1.1'")
+
+def isdevice(obj):
+    return isinstance(obj,eiobase)
+
+def isport(obj):
+    return isinstance(obj,eiobase._eiobase__port)
 
 
 class eio24t(eiobase):
@@ -327,7 +332,7 @@ class eioudp:
         eioudp._max_wr_retries = 0
     
     _maxrecvfrom = 1024
-    
+    _last_exception = None
     
     def cmd(cmd, addr, retries=None):
         """
@@ -369,7 +374,9 @@ class eioudp:
                         eioudp._cnt_pkts += 1
                     else:
                         data = None
-                except TimeoutError:
+                except Exception as e:
+                    # this is a little broad, but we will handle any socket error the same and eventually timeout on retrys
+                    _last_exception = e
                     eioudp._cnt_rd_retries += 1
                     tries += 1
                     if tries > retries: raise TimeoutError
@@ -394,8 +401,12 @@ class eioudp:
                 if (val[-1] & msk) == (cmd[-1] & msk) : break  #write was successful, break out of retry loop
                 #resend original write command
                 with socket(AF_INET, SOCK_DGRAM) as mySocket:
-                    mySocket.sendto(cmd, addr)
-                    eioudp._cnt_pkts += 1
+                    mySocket.settimeout(eioudp.timeout)
+                    try:
+                        mySocket.sendto(cmd, addr)
+                        eioudp._cnt_pkts += 1
+                    except Exception as e:
+                        _last_exception = e
                 eioudp._cnt_wr_retries += 1
                 tries += 1
                 if tries > retries: raise TimeoutError
@@ -589,7 +600,7 @@ class eiotcp:
                         (data, _) = mySocket.recv(eiotcp._maxrecvfrom) 
                     else:
                         data = None
-                except TimeoutError:
+                except Exception as e:
                     tries += 1
                     if tries > eiotcp.retries: raise TimeoutError
                     sleep(eiotcp.retry_delay)
