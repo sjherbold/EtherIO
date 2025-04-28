@@ -376,7 +376,7 @@ class eioudp:
                         data = None
                 except Exception as e:
                     # this is a little broad, but we will handle any socket error the same and eventually timeout on retrys
-                    _last_exception = e
+                    eioudp._last_exception = e
                     eioudp._cnt_rd_retries += 1
                     tries += 1
                     if tries > retries: raise TimeoutError
@@ -406,7 +406,7 @@ class eioudp:
                         mySocket.sendto(cmd, addr)
                         eioudp._cnt_pkts += 1
                     except Exception as e:
-                        _last_exception = e
+                        eioudp._last_exception = e
                 eioudp._cnt_wr_retries += 1
                 tries += 1
                 if tries > retries: raise TimeoutError
