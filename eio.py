@@ -154,6 +154,7 @@ class eiobase:
     eeprom_ipaddr = property(lambda self: self._get_ee_ip(6),  lambda self,v: self._set_ee_ip(6,v),  doc=_doc_ee_ip + ", i.e. '192.168.1.10'")
     eeprom_ipmask = property(lambda self: self._get_ee_ip(25), lambda self,v: self._set_ee_ip(25,v), doc=_doc_ee_ip + ", i.e. '255.255.255.0'")
     eeprom_ipgway = property(lambda self: self._get_ee_ip(27), lambda self,v: self._set_ee_ip(27,v), doc=_doc_ee_ip + ", i.e. '192.168.1.1'")
+    
 
 def isdevice(obj):
     return isinstance(obj,eiobase)
@@ -276,6 +277,13 @@ class eio24r(eiobase):
         """Retrieve the mac address from the device"""
         return (eioudp.mac(b"IO24", self.ipaddr, retries=None))
     
+    def eeprom_enable(self):
+        '''enable write access to the eeprom memory'''
+        eioudp.cmd(b"'1\x00\xAA\x55", self.ipaddr)
+    
+    def eeprom_disable(self):
+        '''disable write access to the eeprom memory'''
+        eioudp.cmd(b"'0\x00\xAA\x55", self.ipaddr)
 
 class eioudp:
     """ etherio udp command driver """
@@ -449,9 +457,8 @@ def eeprom_readword(addr, reg):
 
 def eeprom_writeword(addr, reg, val):
     if isinstance(addr,eiobase) : addr = addr.ipaddr
-    print(f'{addr=} {reg=} {val=}')
     eioudp.cmd(b"'W"+bytes((reg,))+val, addr)
-    
+    sleep(0.010) #allow time for the write to complete
 
 def eeprom_image(addr):
     """returns an array of ints for the bytes in the eeprom"""
