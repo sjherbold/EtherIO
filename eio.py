@@ -25,7 +25,7 @@ class eiobase:
         """
         
         kinds = ['IO24R','IO24T','IO72T']
-        if kind not in kinds : raise ValueError(f'Device kind must be one of {kinds}')
+        if kind not in kinds : raise ValueError('Device kind must be one of {}'.format(kinds))
         
         #address stored as a tuple of (address,port)
         self.ipaddr = addrtuple(ipaddr)
@@ -56,13 +56,13 @@ class eiobase:
             self.port = port   #port letter
 
         def __str__(self):
-            return f'port{self.port.lower()} of {self.eio.__str__()}'
+            return 'port{} of {}'.format(self.port.lower(),self.eio.__str__())
         
         #create low level eio command to get port register data
         def _pget(self, s):
             if s and (s in "#$") and (self.eio.kind != "IO24R") : 
                 # only IO24R has sch and thr attributes
-                raise AttributeError(f'{self.eio.kind} does not have this attribute')
+                raise AttributeError('{} does not have this attribute'.format(self.eio.kind))
             c = bytes(s,'utf-8') + self.port.lower().encode()
             d = eioudp.cmd(c, self.eio.ipaddr)
             return d[-1]   #the data is the last byte of the returned command response
@@ -71,7 +71,7 @@ class eiobase:
         def _pset(self, s, v):
             if s and (s in "#$") and (self.eio.kind != "IO24R") : 
                 # only IO24R has sch and thr attributes
-                raise AttributeError(f'{self.eio.kind} does not have this attribute')
+                raise AttributeError('{} does not have this attribute'.format(self.eio.kind))
             c = bytes(s,'utf-8') + self.port.upper().encode() + bytes((v,))
             eioudp.cmd(c, self.eio.ipaddr)
         
@@ -112,7 +112,7 @@ class eiobase:
             if not isinstance(io, int):
                 raise TypeError("Index must be an integer")
             if  (io<0 or io>=self.len) : 
-                raise IndexError(f'Index out of range: {self.eio.kind} io range from 0 - {self.len-1} inclusive')
+                raise IndexError('Index out of range: {} io range from 0 - {} inclusive'.format(self.eio.kind,self.len-1))
             prt,bit = divmod(io,8)
             msk = 1<<bit
             return (prt,bit,msk)
@@ -120,14 +120,13 @@ class eiobase:
         def __getitem__(self, io):
             prt,bit,msk = self._iochk(io)
             val = self.eio.ports[prt].val
-            #print(f'{prt=} {bit=} {msk=} {val=}')
             return( 1 if (val & msk) else 0 ) 
         
         def __setitem__(self, io, v):
             LOs = [0,'0','L','LO','LOW', 'OFF']
             HIs = [1,'1','H','HI','HIGH','ON' ]
             if v not in LOs + HIs:
-                raise ValueError(f'{self.eio.kind} io values in {LOs+HIs}')
+                raise ValueError('{} io values in {}'.format(self.eio.kind,LOs+HIs))
             prt,bit,msk = self._iochk(io)
             val = self.eio.ports[prt].val
             if v in LOs: val = val & (msk ^ 0xFF)
@@ -140,7 +139,7 @@ class eiobase:
     def _get_ee_ip(self, reg):
         w1 = eeprom_readword(self.ipaddr, reg+0)
         w2 = eeprom_readword(self.ipaddr, reg+1)
-        return f'{w1[1]}.{w1[0]}.{w2[1]}.{w2[0]}'
+        return '{}.{}.{}.{}'.format(w1[1],w1[0],w2[1],w2[0])
     
     def _set_ee_ip(self, reg, val):
         val = [ int(x) for x in val.split('.') ]
@@ -188,7 +187,7 @@ class eio24t(eiobase):
         super().__init__("IO24T", ipaddr, ipport)
     
     def __str__(self):
-        return f"eio24t device at {self.ipaddr}"
+        return 'eio24t device at {}'.format(self.ipaddr)
     
     def reset(self):
         """Send reset command to the device ('@)"""
@@ -225,7 +224,7 @@ class eio72t(eiobase):
         super().__init__("IO72T", ipaddr, ipport)    
     
     def __str__(self):
-        return f"eio72t device at {self.ipaddr}"
+        return 'eio72t device at {}'.format(self.ipaddr)
     
     def reset(self):
         """Send reset command to the device ('@)"""
@@ -265,7 +264,7 @@ class eio24r(eiobase):
         super().__init__("IO24R", ipaddr, ipport)
    
     def __str__(self):
-        return f"eio24r device at {self.ipaddr}"
+        return 'eio24r device at {}'.format(self.ipaddr)
     
     def reset(self):
         """Send reset command to the device ('@\\x00\\xAA\\x55)"""
@@ -405,7 +404,6 @@ class eioudp:
             while True:
                 val = eioudp.cmd(vcmd,addr)                    #use our function to get read retries without adding same logic here
                 eioudp._cnt_cmds -= 1                          #take our extra command off the count of official commands
-                #print(f'{val.hex()=} {cmd.hex()=} {msk=:02x}')
                 if (val[-1] & msk) == (cmd[-1] & msk) : break  #write was successful, break out of retry loop
                 #resend original write command
                 with socket(AF_INET, SOCK_DGRAM) as mySocket:
