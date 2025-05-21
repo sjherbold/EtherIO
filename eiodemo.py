@@ -4,15 +4,17 @@ from time import sleep, time
 from eio import *
 
 def test(dev=None, delay=0.25, max=None):
-    """ Simple walking ones test across porta """
-    if not dev: dev = eio24r(eaddr)
-    print('test:',dev)
-    dev.porta.dir = PORTDIROUTPUT
+    """ Simple walking ones test across port """
+    if not dev:       dev = eio24r(eaddr)
+    if isdevice(dev): port = dev.porta
+    if isport(dev):   port = dev
+    print('test:',port)
+    port.dir = PORTDIROUTPUT
     lites = [1,2,4,8,16,32,64,128,0]
     cnt = 0
     while True:
         for led in lites:
-            dev.porta.val = led
+            port.val = led
             sleep(delay)
         cnt += 1
         if cnt == max : break
@@ -125,7 +127,7 @@ def loopbacktest(dev=None, delay=0.010, wait=0.010, reportevery=1000, max=None):
         b = dev.portb.val
         c = dev.portc.val
         if not (a == b == c) :
-            print(f'{num=:3} {a=:3} {b=:3} {c=:3} {last=:3}')
+            print('num={:3d} a={:3d} b={:3d} c={:3d} last={:3d}'.format(num,a,b,c,last))
             #try again?
             a = dev.porta.val
             b = dev.portb.val
@@ -137,7 +139,7 @@ def loopbacktest(dev=None, delay=0.010, wait=0.010, reportevery=1000, max=None):
             tnow   = time()
             tdiff  = tnow - tlast
             ttotal = tnow - tstart
-            print(f'{loopcnt=} {tdiff=:.3f} {ttotal=:.3f}')
+            print('loopcnt={} tdiff={:.3f} ttotal={:.3f}'.format(loopcnt,tdiff,ttotal))
             print(eioudp.stats())
             tlast = tnow
         if loopcnt == max : break
@@ -149,7 +151,7 @@ if __name__ == "__main__":
     if len(sys.argv)==2:
         eaddr = sys.argv[1] 
     else:
-        a = input(f"Enter your EtherIO device ip adddress ({eaddr}):")
+        a = input('Enter your EtherIO device ip adddress ({}):'.format(eaddr))
         if a : eaddr = a
     test(max=10)
     cylon(max=100)
