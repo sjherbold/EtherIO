@@ -24,7 +24,7 @@ def cylon(dev=None, delay=0.05, max=None):
     if not dev: dev = eio24r(eaddr)
     print('Cylon:',dev)
     dev.porta.dir = PORTDIROUTPUT
-    lites = [1,2,4,8,16,32,64,128,64,32,16,8,8,2]
+    lites = [1,2,4,8,16,32,64,128,64,32,16,8,4,2]
     cnt = 0
     while True:
         for led in lites:
