@@ -153,6 +153,8 @@ class eiobase:
     eeprom_ipaddr = property(lambda self: self._get_ee_ip(6),  lambda self,v: self._set_ee_ip(6,v),  doc=_doc_ee_ip + ", i.e. '192.168.1.10'")
     eeprom_ipmask = property(lambda self: self._get_ee_ip(25), lambda self,v: self._set_ee_ip(25,v), doc=_doc_ee_ip + ", i.e. '255.255.255.0'")
     eeprom_ipgway = property(lambda self: self._get_ee_ip(27), lambda self,v: self._set_ee_ip(27,v), doc=_doc_ee_ip + ", i.e. '192.168.1.1'")
+    eeprom_ipport = property(lambda self: int.from_bytes(eeprom_readword(self.ipaddr, 29),'big'), 
+                             lambda self,v: eeprom_writeword(self.ipaddr, 29, v.to_bytes(2,'big')), doc=_doc_ee_ip + ", i.e. 2424")
     
 
 def isdevice(obj):
@@ -453,10 +455,14 @@ def eeprom_readword(addr, reg):
     rsp = eioudp.cmd(b"'R"+bytes((reg,))+b"\x00\x00", addr)
     return rsp[-2:]
 
-def eeprom_writeword(addr, reg, val):
+def eeprom_writeword(addr, reg, val, verify=True):
     if isinstance(addr,eiobase) : addr = addr.ipaddr
+    if isinstance(val,int) : val = val.to_bytes(2,'big')
+    if not isinstance(val,bytes) or len(val) > 2: raise ValueError('val expected to be of type bytes and len of 2')
     eioudp.cmd(b"'W"+bytes((reg,))+val, addr)
     sleep(0.010) #allow time for the write to complete
+    if verify and (eeprom_readword(addr, reg) != val):
+        raise RuntimeWarning('eeprom write failed, eeprom may be locked, try eeprom_enable() or remove eeprom lock jumper')
 
 def eeprom_image(addr):
     """returns an array of ints for the bytes in the eeprom"""
